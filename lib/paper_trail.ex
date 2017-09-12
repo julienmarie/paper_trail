@@ -203,10 +203,12 @@ defmodule PaperTrail do
         |> Multi.run(:version, fn %{model: model} ->
           versions = make_version_structs(%{event: "update"}, model, changeset, options)
 
-          results = case versions do
-            [nil | rest] -> [{:ok, nil} | Enum.map(rest, &@repo.insert/1)]
-            _ -> Enum.map(versions, &@repo.insert/1)
-          end
+        results = Enum.map(versions, fn(x) ->
+                                case x do
+                                  nil -> {:ok, nil}
+                                  other -> @repo.insert(other)
+                                end
+                              end)
 
           format_multiple_results(results)
         end)
